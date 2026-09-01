@@ -1,5 +1,6 @@
 ---
 description: Remove the usage status line from settings.json, backing the file up first.
+disable-model-invocation: true
 ---
 
 # Remove the status line

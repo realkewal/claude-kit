@@ -13,12 +13,12 @@ In Claude Code:
 Then install what you want:
 
 ```
-/plugin install statusline@claude-kit
+/plugin install usage-statusline@claude-kit
 ```
 
 ## What's in it
 
-### statusline
+### usage-statusline
 
 A multi-line status line showing your session and weekly rate limits alongside
 context window usage, as three aligned bars.
@@ -44,12 +44,12 @@ segments appear, warn and danger thresholds, glyphs, labels, and every colour.
 No ANSI dim is used anywhere, and the danger state carries a shape cue as well as
 a colour, so it holds up on light themes and without colour vision.
 
-After installing the plugin, run `/statusline:install` once. Claude Code does not
+After installing the plugin, run `/usage-statusline:install` once. Claude Code does not
 let plugins set a status line directly, so that command runs the bundled
 installer, which writes the `settings.json` entry for you and backs up anything it
 replaces.
 
-Full documentation: [plugins/statusline](plugins/statusline).
+Full documentation: [plugins/usage-statusline](plugins/usage-statusline).
 
 ## Requirements
 

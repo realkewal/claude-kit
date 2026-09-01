@@ -1,5 +1,6 @@
 ---
 description: Install the usage status line into settings.json. Pass "--dry-run" to preview without changing anything.
+disable-model-invocation: true
 ---
 
 # Install the status line

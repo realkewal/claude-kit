@@ -1,4 +1,4 @@
-# statusline
+# usage-statusline
 
 A multi-line status line for [Claude Code](https://claude.com/claude-code). Shows your
 session and weekly rate limits alongside context window usage, as three aligned bars.
@@ -22,8 +22,8 @@ As a plugin, from the [claude-kit](https://github.com/realkewal/claude-kit) mark
 
 ```
 /plugin marketplace add realkewal/claude-kit
-/plugin install statusline@claude-kit
-/statusline:install
+/plugin install usage-statusline@claude-kit
+/usage-statusline:install
 ```
 
 The third step is not redundant. Claude Code's plugin system does not allow
@@ -35,7 +35,7 @@ Or standalone, without the marketplace:
 
 ```sh
 git clone https://github.com/realkewal/claude-kit
-cd claude-kit/plugins/statusline/scripts
+cd claude-kit/plugins/usage-statusline/scripts
 ./install.sh
 ```
 
@@ -190,7 +190,7 @@ worktree on every render.
 ## Uninstall
 
 ```
-/statusline:uninstall
+/usage-statusline:uninstall
 ```
 
 or directly:
