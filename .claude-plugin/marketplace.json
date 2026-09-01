@@ -1,0 +1,32 @@
+{
+  "name": "claude-kit",
+  "owner": {
+    "name": "Kewal",
+    "url": "https://github.com/realkewal"
+  },
+  "description": "Claude Code plugins for the things the built-in tooling leaves quiet: usage visibility, writing quality, and repo safety.",
+  "plugins": [
+    {
+      "name": "statusline",
+      "source": "./plugins/statusline",
+      "description": "A multi-line status line showing your session and weekly rate limits alongside context window usage, as three aligned bars with percentages, reset countdowns, and a burn-rate projection.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Kewal",
+        "url": "https://github.com/realkewal"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "statusline",
+        "status-line",
+        "usage",
+        "rate-limits",
+        "context-window",
+        "tokens",
+        "cost",
+        "accessibility"
+      ]
+    }
+  ]
+}

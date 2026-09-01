@@ -1,0 +1,21 @@
+{
+  "name": "statusline",
+  "version": "1.0.0",
+  "description": "A multi-line status line showing your session and weekly rate limits alongside context window usage, as three aligned bars.",
+  "author": {
+    "name": "Kewal",
+    "url": "https://github.com/realkewal"
+  },
+  "repository": "https://github.com/realkewal/claude-kit",
+  "license": "MIT",
+  "keywords": [
+    "statusline",
+    "usage",
+    "rate-limits",
+    "context-window"
+  ],
+  "commands": [
+    "./commands/install.md",
+    "./commands/uninstall.md"
+  ]
+}
