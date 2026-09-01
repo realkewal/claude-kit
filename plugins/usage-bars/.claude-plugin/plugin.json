@@ -1,6 +1,6 @@
 {
-  "name": "usage-statusline",
-  "displayName": "Usage Statusline",
+  "name": "usage-bars",
+  "displayName": "Usage Bars",
   "version": "1.0.0",
   "description": "A multi-line status line showing your session and weekly rate limits alongside context window usage, as three aligned bars.",
   "author": {

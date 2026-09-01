@@ -7,9 +7,9 @@
   "description": "Claude Code plugins for the things the built-in tooling leaves quiet: usage visibility, writing quality, and repo safety.",
   "plugins": [
     {
-      "name": "usage-statusline",
-      "displayName": "Usage Statusline",
-      "source": "./plugins/usage-statusline",
+      "name": "usage-bars",
+      "displayName": "Usage Bars",
+      "source": "./plugins/usage-bars",
       "description": "A multi-line status line showing your session and weekly rate limits alongside context window usage, as three aligned bars with percentages, reset countdowns, and a burn-rate projection.",
       "version": "1.0.0",
       "author": {
