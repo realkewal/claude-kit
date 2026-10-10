@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LinkedIn profile review: {{NAME}}</title>
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --blue: #1d4ed8; --blue-soft: #eff4ff; --blue-line: #c7d7fe;
+    --ink: #0f172a; --body: #334155; --muted: #64748b; --line: #e2e8f0; --paper: #f8fafc;
+    --red: #b42318; --red-soft: #fef3f2; --red-line: #fecdca;
+    --green: #067647; --green-soft: #ecfdf3; --green-line: #abefc6;
+    --amber: #b54708; --amber-soft: #fffaeb; --amber-line: #fedf89;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif; color: var(--body); font-size: 10.5pt; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 16mm 17mm 14mm; position: relative; page-break-after: always; overflow: hidden; background: #fff; }
+  .page:last-child { page-break-after: auto; }
+  .foot { position: absolute; left: 17mm; right: 17mm; bottom: 8mm; display: flex; justify-content: space-between; font-size: 8pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 3mm; }
+  h1 { font-size: 27pt; line-height: 1.12; color: var(--ink); margin: 0 0 3mm; letter-spacing: -0.02em; font-weight: 700; }
+  h2 { font-size: 16pt; color: var(--ink); margin: 0; letter-spacing: -0.01em; font-weight: 700; line-height: 1.2; }
+  h3 { font-size: 10.5pt; color: var(--ink); margin: 0 0 1.5mm; font-weight: 650; }
+  p { margin: 0 0 2.5mm; }
+  .lede { font-size: 12pt; color: var(--body); max-width: 150mm; }
+  .eyebrow { font-size: 8pt; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--blue); margin-bottom: 2mm; }
+  .tile { width: 11mm; height: 11mm; border-radius: 3mm; background: var(--blue); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .tile svg { width: 5.6mm; height: 5.6mm; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tile.sm { width: 8mm; height: 8mm; border-radius: 2.2mm; } .tile.sm svg { width: 4.2mm; height: 4.2mm; }
+  .head { display: flex; align-items: center; gap: 4mm; margin-bottom: 4mm; }
+  .head .sub { font-size: 9.5pt; color: var(--muted); margin-top: 0.6mm; }
+  .chip { display: inline-block; font-size: 7.6pt; font-weight: 700; padding: 0.7mm 2.4mm; border-radius: 10mm; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; }
+  .chip.red { background: var(--red-soft); color: var(--red); border: 1px solid var(--red-line); }
+  .chip.amber { background: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber-line); }
+  .chip.green { background: var(--green-soft); color: var(--green); border: 1px solid var(--green-line); }
+  .chip.blue { background: var(--blue-soft); color: var(--blue); border: 1px solid var(--blue-line); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; }
+  .card { border: 1px solid var(--line); border-radius: 3mm; padding: 4mm 4.5mm; background: #fff; }
+  .card.soft { background: var(--paper); }
+  .label { font-size: 7.6pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2mm; display: flex; align-items: center; gap: 1.6mm; }
+  .label svg { width: 3.4mm; height: 3.4mm; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .before { border-color: var(--red-line); background: var(--red-soft); } .before .label { color: var(--red); } .before .label svg { stroke: var(--red); }
+  .after { border-color: var(--green-line); background: var(--green-soft); } .after .label { color: var(--green); } .after .label svg { stroke: var(--green); }
+  .mock { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3mm 3.5mm; font-size: 9.2pt; color: var(--ink); line-height: 1.45; }
+  .mock .role { font-weight: 650; } .mock .meta { color: var(--muted); font-size: 8.4pt; }
+  .mock ul { margin: 1.5mm 0 0; padding-left: 4.2mm; } .mock li { margin-bottom: 0.9mm; }
+  .empty { border: 1px dashed var(--red-line); border-radius: 1.5mm; color: var(--red); font-size: 8.4pt; padding: 1.6mm 2.4mm; margin-top: 1.8mm; background: #fff; }
+  .fill { background: #fff3c4; border-radius: 1mm; padding: 0 1mm; color: #713f12; font-weight: 600; }
+  .strike { text-decoration: line-through; color: #94a3b8; }
+  .why { font-size: 9.4pt; color: var(--body); }
+  table { width: 100%; border-collapse: collapse; font-size: 9.6pt; }
+  th { text-align: left; font-size: 7.6pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0 2.5mm 1.8mm 0; border-bottom: 1px solid var(--line); }
+  td { padding: 1.55mm 2.5mm 1.55mm 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.s { font-weight: 650; color: var(--ink); white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  .num { width: 7mm; height: 7mm; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-size: 9.5pt; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .step { display: flex; gap: 3.5mm; align-items: flex-start; }
+  .box { width: 4.4mm; height: 4.4mm; border: 1.5px solid #94a3b8; border-radius: 1mm; flex: none; margin-top: 0.7mm; }
+  .check { display: flex; gap: 3mm; padding: 2mm 0; border-bottom: 1px solid var(--line); } .check:last-child { border-bottom: 0; }
+  .check b { color: var(--ink); font-weight: 650; }
+  .note { border-left: 3px solid var(--blue); background: var(--blue-soft); padding: 3mm 4mm; border-radius: 0 2mm 2mm 0; font-size: 9.6pt; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 1.6mm; }
+  .pill { font-size: 8.6pt; border: 1px solid var(--line); border-radius: 10mm; padding: 0.8mm 2.6mm; background: #fff; color: var(--ink); }
+  .pill.out { color: #94a3b8; text-decoration: line-through; border-color: var(--red-line); background: var(--red-soft); }
+  .pill.in { border-color: var(--green-line); background: var(--green-soft); color: var(--green); font-weight: 650; }
+  .mt { margin-top: 5mm; } .mt-s { margin-top: 3mm; }
+  .count { font-size: 8pt; color: var(--muted); margin-top: 1.4mm; }
+</style>
+</head>
+<body>
+
+<!--
+  LinkedIn audit report template.
+
+  Copy this file, then replace every {{PLACEHOLDER}} and repeat or delete blocks as
+  the audit needs. Each <section class="page"> is one A4 page with a fixed height,
+  so content that runs past the footer is clipped: split it onto another page.
+
+  Building blocks, all shown below:
+    .head + .tile        section heading with an icon tile
+    .chip.red|amber|green|blue   status label
+    .card.before / .card.after   "Now" and "Suggested" pair, inside .grid2
+    .mock                a quoted piece of the profile, or text to paste
+    .fill                a gap the profile owner must fill in. Never guess its content.
+    .empty               marks something missing from the profile
+    .pill / .pill.out / .pill.in   skills kept, removed, added
+    .note                a caveat, assumption, or question for the owner
+    .check + .box        one checklist line
+    table                verdict tables. Verdict chips can say whatever fits:
+                         Keep, Remove, Review, Move to 1st, Align, Reword.
+
+  Icons are Lucide (https://lucide.dev), inlined as SVG so the file has no
+  external requests. Swap the paths to change an icon.
+-->
+
+<!-- ===================== PAGE 1: SUMMARY ===================== -->
+<section class="page">
+  <div class="eyebrow">LinkedIn profile review</div>
+  <h1>{{NAME}}</h1>
+  <p class="lede">{{ONE_OR_TWO_SENTENCE_VERDICT}}</p>
+
+  <div class="grid3 mt">
+    <!-- Repeat three times: the three changes that matter most for the stated goal. -->
+    <div class="card soft">
+      <div class="tile sm"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+      <h3 class="mt-s">1. {{TOP_CHANGE}}</h3>
+      <p class="why">{{WHY_IN_ONE_OR_TWO_SENTENCES}}</p>
+    </div>
+  </div>
+
+  <div class="head mt" style="margin-top:6mm">
+    <div class="tile"><svg viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg></div>
+    <div><h2>Section by section</h2><div class="sub">What is there now, and what to do about it</div></div>
+  </div>
+
+  <table>
+    <tr><th style="width:31mm">Section</th><th style="width:25mm">Status</th><th>What I found</th><th style="width:15mm">Page</th></tr>
+    <!-- One row per section. Keep "What I found" to one line. Status is one of:
+           Fix first (red)    the changes that matter most for the goal
+           Tighten (amber)    works, but could be sharper
+           Good (green)       leave it alone
+           Missing (red)      only when the owner confirmed there is none
+           Not visible (blue) not in the export and not answered
+         A section the owner answered a question about gets a normal status, and its
+         finding starts "You told me: ...". -->
+    <tr><td class="s">{{SECTION}}</td><td><span class="chip red">Fix first</span></td><td>{{FINDING}}</td><td>{{PAGE}}</td></tr>
+    <tr><td class="s">{{SECTION_THE_OWNER_ANSWERED}}</td><td><span class="chip amber">Tighten</span></td><td>You told me: {{ANSWER}}. {{FINDING}}</td><td>{{PAGE}}</td></tr>
+    <tr><td class="s">{{SECTIONS_NOBODY_ANSWERED}}</td><td><span class="chip blue">Not visible</span></td><td>Not in the export. Unknown.</td><td></td></tr>
+  </table>
+
+  <div class="foot"><span>LinkedIn profile review for {{NAME}}</span><span>Reviewed {{DATE}} · Page 1 of {{N}}</span></div>
+</section>
+
+<!-- ===================== A FINDING PAGE ===================== -->
+<section class="page">
+  <div class="head">
+    <div class="tile"><svg viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+    <div><h2>{{NUMBER}}. {{SECTION}}</h2><div class="sub">{{ONE_LINE_FRAMING}}</div></div>
+    <span class="chip red" style="margin-left:auto">Fix first</span>
+  </div>
+
+  <p>{{WHY_THIS_MATTERS_FOR_THE_GOAL}}</p>
+
+  <div class="grid2 mt-s">
+    <div class="card before">
+      <div class="label"><svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Now</div>
+      <div class="mock">
+        <div class="role">{{TITLE}}</div>
+        <div class="meta">{{COMPANY_AND_DATES}}</div>
+        <div class="empty">No description</div>
+      </div>
+    </div>
+    <div class="card after">
+      <div class="label"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Suggested</div>
+      <div class="mock">
+        <div class="role">{{TITLE}}</div>
+        <div class="meta">{{COMPANY_AND_DATES}}</div>
+        <ul>
+          <li>{{BULLET_USING_ONLY_FACTS_FROM_THE_PROFILE}}</li>
+          <li><span class="fill">{{WHAT_THE_OWNER_MUST_SUPPLY}}</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="note mt"><b>Check before pasting.</b> {{ANY_ASSUMPTION_MADE}}</div>
+
+  <h3 class="mt">{{SUBHEADING}}</h3>
+  <table>
+    <tr><th style="width:62mm">Item</th><th style="width:26mm">Verdict</th><th>Why</th></tr>
+    <tr><td class="s">{{ITEM}}</td><td><span class="chip green">Keep</span></td><td>{{REASON}}</td></tr>
+    <tr><td class="s">{{ITEM}}</td><td><span class="chip amber">Review</span></td><td>{{REASON}}</td></tr>
+    <tr><td class="s">{{ITEM}}</td><td><span class="chip red">Remove</span></td><td>{{REASON}}</td></tr>
+  </table>
+
+  <h3 class="mt">Skills</h3>
+  <div class="grid2">
+    <div class="card before">
+      <div class="label"><svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Now</div>
+      <div class="pill-row"><span class="pill">{{KEPT}}</span><span class="pill out">{{REMOVED}}</span></div>
+    </div>
+    <div class="card after">
+      <div class="label"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Suggested</div>
+      <div class="pill-row"><span class="pill">{{KEPT}}</span><span class="pill in">{{ADDED}}</span></div>
+    </div>
+  </div>
+
+  <div class="foot"><span>LinkedIn profile review for {{NAME}}</span><span>Page {{P}} of {{N}}</span></div>
+</section>
+
+<!-- ===================== LAST PAGE: CHECKLIST ===================== -->
+<section class="page">
+  <div class="head">
+    <div class="tile"><svg viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg></div>
+    <div><h2>Your checklist</h2><div class="sub">In the order I would do them. Tick them off as you go.</div></div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <div class="label" style="color:var(--red)">Do first</div>
+        <div class="check"><span class="box"></span><div><b>{{ACTION}}</b><br>{{WHERE_TO_FIND_THE_TEXT}}</div></div>
+      </div>
+      <div class="card mt-s">
+        <div class="label" style="color:var(--amber)">Then tidy</div>
+        <div class="check"><span class="box"></span><div><b>{{ACTION}}</b></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="label" style="color:var(--blue)">Then build proof</div>
+        <div class="check"><span class="box"></span><div><b>{{ACTION}}</b></div></div>
+      </div>
+      <div class="card soft mt-s">
+        <h3>While you are editing</h3>
+        <div class="check"><div><b>Turn off "Notify network"</b><br>It is a switch at the top of each role's edit screen. Leave it off so your connections are not told about every edit.</div></div>
+        <div class="check"><div><b>Skip the share prompts</b><br>After saving a role, LinkedIn offers to post an update. Choose Skip.</div></div>
+        <div class="check"><div><b>Only claim what you can explain</b><br>Interviewers ask about the numbers and the word "led". Use figures you are sure of.</div></div>
+      </div>
+      <div class="card soft mt-s">
+        <h3>What this review could not see</h3>
+        <p class="why" style="margin:0">{{LIST_THE_SECTIONS_THE_EXPORT_OMITS_AND_ANYTHING_UNANSWERED}}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>LinkedIn profile review for {{NAME}}</span><span>Page {{N}} of {{N}}</span></div>
+</section>
+
+</body>
+</html>
