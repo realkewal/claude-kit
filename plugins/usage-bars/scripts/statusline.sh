@@ -47,7 +47,9 @@ done
 : "${SHOW_PACE:=1}"
 : "${SHOW_TOKENS:=1}"
 : "${PACE_MIN_ELAPSED:=1200}"
+: "${WEEK_PACE_MIN_ELAPSED:=43200}"
 : "${SESSION_WINDOW:=18000}"
+: "${WEEK_WINDOW:=604800}"
 
 : "${WARN_PCT:=60}"
 : "${DANGER_PCT:=85}"
@@ -170,11 +172,11 @@ until_reset() {
 # Project usage to the end of the window from the rate so far. Suppressed early
 # in a window, where too little has elapsed for the number to mean anything.
 on_pace() {
-  local pct=$1 remaining=$2 window=$3 elapsed projected
+  local pct=$1 remaining=$2 window=$3 min_elapsed=$4 elapsed projected
   [ "$SHOW_PACE" != "1" ] && return
   [ -z "$pct" ] && return
   elapsed=$((window - remaining))
-  [ "$elapsed" -lt "$PACE_MIN_ELAPSED" ] || [ "$elapsed" -ge "$window" ] && return
+  [ "$elapsed" -lt "$min_elapsed" ] || [ "$elapsed" -ge "$window" ] && return
   projected=$((pct * window / elapsed))
   [ "$projected" -gt 999 ] && projected=999
   [ "$projected" -le "$pct" ] && return
@@ -279,13 +281,16 @@ five_note=""
 if [ -n "$five_reset" ]; then
   remaining=$((five_reset - now))
   [ "$SHOW_RESETS" = "1" ] && five_note=$(until_reset "$remaining")
-  five_note+=$(on_pace "${five_pct%.*}" "$remaining" "$SESSION_WINDOW")
+  five_note+=$(on_pace "${five_pct%.*}" "$remaining" "$SESSION_WINDOW" "$PACE_MIN_ELAPSED")
   five_note=${five_note# · }
 fi
 
 week_note=""
-if [ -n "$week_reset" ] && [ "$SHOW_RESETS" = "1" ]; then
-  week_note=$(until_reset $((week_reset - now)))
+if [ -n "$week_reset" ]; then
+  remaining=$((week_reset - now))
+  [ "$SHOW_RESETS" = "1" ] && week_note=$(until_reset "$remaining")
+  week_note+=$(on_pace "${week_pct%.*}" "$remaining" "$WEEK_WINDOW" "$WEEK_PACE_MIN_ELAPSED")
+  week_note=${week_note# · }
 fi
 
 # Auto-compact threshold. Claude Code resolves an "auto" window internally and

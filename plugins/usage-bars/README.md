@@ -8,7 +8,7 @@ Opus 5 · high · thinking | ~/dev | main* | edited +214/-31 · $0.92
 
 Session ██░░░░░░░░░░░░░░░░░░   9%  resets in 4h 31m · on pace for 22%
 
-Week    ███░░░░░░░░░░░░░░░░░  16%  resets in 3d 15h
+Week    ███░░░░░░░░░░░░░░░░░  16%  resets in 3d 15h · on pace for 33%
 
 Context █████░┊░░░░░░░░░░░░░  26%  52k / 200k · compacts at 30%
 ```
@@ -93,10 +93,12 @@ All `1` by default.
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `SHOW_RESETS` | `1` | `resets in 4h 31m` |
-| `SHOW_PACE` | `1` | `on pace for 41%`, projected from the rate so far |
+| `SHOW_PACE` | `1` | `on pace for 41%` on the session and week bars, projected from the rate so far |
 | `SHOW_TOKENS` | `1` | `41k / 1.0M` on the context bar |
-| `PACE_MIN_ELAPSED` | `1200` | Seconds into a window before the projection appears |
+| `PACE_MIN_ELAPSED` | `1200` | Seconds into the session window before its projection appears |
+| `WEEK_PACE_MIN_ELAPSED` | `43200` | Seconds into the week window before its projection appears. Early-week usage is too noisy to project. |
 | `SESSION_WINDOW` | `18000` | Length of the session rate-limit window, in seconds |
+| `WEEK_WINDOW` | `604800` | Length of the weekly rate-limit window, in seconds |
 
 **Thresholds**
 
