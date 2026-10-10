@@ -55,6 +55,23 @@ Useful flags:
 
 Requires `bash`, `jq`, `git`, and `awk`. Works on bash 3.2, so stock macOS is fine.
 
+## Updating
+
+Updating the plugin does not update the status line on its own. The installer copied
+`statusline.sh` into `~/.claude/`, and that copy is what Claude Code runs, so it has to
+be copied again. From a terminal:
+
+```sh
+claude plugin marketplace update claude-kit
+claude plugin update usage-bars@claude-kit
+```
+
+Restart Claude Code, then run `/usage-bars:install` once more. Your `statusline.conf`
+is kept, the previous script is backed up with a timestamp, and any setting a new
+version adds falls back to its default until you set it.
+
+Standalone installs: `git pull`, then run `./install.sh` again.
+
 ## Configuring
 
 Edit `~/.claude/statusline.conf`. It is sourced as plain bash, so it is `NAME=value`
