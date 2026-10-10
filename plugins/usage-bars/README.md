@@ -6,7 +6,7 @@ session and weekly rate limits alongside context window usage, as three aligned 
 ```
 Opus 5 · high · thinking | ~/dev | main* | edited +214/-31 · $0.92
 
-Session ██░░░░░░░░░░░░░░░░░░   9%  resets in 4h 31m · on pace for 22%
+Session ██░░░░░░░░░░░░░░░░░░   9%  resets in 2h 58m · on pace for 22%
 
 Week    ███░░░░░░░░░░░░░░░░░  16%  resets in 3d 15h · on pace for 33%
 
@@ -54,6 +54,23 @@ Useful flags:
 | `--uninstall` | Remove the `statusLine` entry from settings.json |
 
 Requires `bash`, `jq`, `git`, and `awk`. Works on bash 3.2, so stock macOS is fine.
+
+## Updating
+
+Updating the plugin does not update the status line on its own. The installer copied
+`statusline.sh` into `~/.claude/`, and that copy is what Claude Code runs, so it has to
+be copied again. From a terminal:
+
+```sh
+claude plugin marketplace update claude-kit
+claude plugin update usage-bars@claude-kit
+```
+
+Restart Claude Code, then run `/usage-bars:install` once more. Your `statusline.conf`
+is kept, the previous script is backed up with a timestamp, and any setting a new
+version adds falls back to its default until you set it.
+
+Standalone installs: `git pull`, then run `./install.sh` again.
 
 ## Configuring
 
