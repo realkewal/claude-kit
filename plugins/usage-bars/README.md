@@ -6,7 +6,7 @@ session and weekly rate limits alongside context window usage, as three aligned 
 ```
 Opus 5 · high · thinking | ~/dev | main* | edited +214/-31 · $0.92
 
-Session ██░░░░░░░░░░░░░░░░░░   9%  resets in 4h 31m · on pace for 22%
+Session ██░░░░░░░░░░░░░░░░░░   9%  resets in 2h 58m · on pace for 22%
 
 Week    ███░░░░░░░░░░░░░░░░░  16%  resets in 3d 15h · on pace for 33%
 
