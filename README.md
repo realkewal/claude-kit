@@ -51,10 +51,27 @@ replaces.
 
 Full documentation: [plugins/usage-bars](plugins/usage-bars).
 
+### linkedin-audit
+
+Audits a LinkedIn profile from its "Save to PDF" export and writes a feedback
+report: a rating for every section, before and after rewrites, and a checklist.
+
+It works from the export rather than the live site, so nothing logs in to or
+scrapes LinkedIn. Suggested rewrites use only facts the profile already states,
+and anything the owner needs to add is marked as a gap instead of being guessed.
+
+```
+/plugin install linkedin-audit@claude-kit
+/linkedin-audit:audit path/to/Profile.pdf
+```
+
+Full documentation: [plugins/linkedin-audit](plugins/linkedin-audit).
+
 ## Requirements
 
-`bash`, `jq`, `git`, and `awk`. Everything works on bash 3.2, so stock macOS is
-fine with no upgrade.
+usage-bars needs `bash`, `jq`, `git`, and `awk`, and works on bash 3.2, so stock
+macOS is fine with no upgrade. linkedin-audit needs nothing extra; a Chromium-family
+browser is used to make the PDF if one is installed.
 
 ## License
 

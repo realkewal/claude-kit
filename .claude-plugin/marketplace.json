@@ -29,6 +29,28 @@
         "cost",
         "accessibility"
       ]
+    },
+    {
+      "name": "linkedin-audit",
+      "displayName": "LinkedIn Audit",
+      "source": "./plugins/linkedin-audit",
+      "description": "Audit a LinkedIn profile from its \"Save to PDF\" export and write a section-by-section feedback report, using only facts the profile already states.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Kewal",
+        "url": "https://iamkewal.com"
+      },
+      "homepage": "https://iamkewal.com/tools",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "linkedin",
+        "profile",
+        "audit",
+        "career",
+        "resume",
+        "feedback"
+      ]
     }
   ]
 }
