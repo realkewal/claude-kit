@@ -53,8 +53,8 @@ Full documentation: [plugins/usage-bars](plugins/usage-bars).
 
 ## Requirements
 
-`bash`, `jq`, `git`, and `awk`. Everything works on bash 3.2, so stock macOS is
-fine with no upgrade.
+`bash`, `jq`, and `awk`, plus `git` for the optional dirty marker. Everything works
+on bash 3.2, so stock macOS is fine with no upgrade.
 
 ## License
 
