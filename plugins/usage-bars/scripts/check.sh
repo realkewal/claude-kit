@@ -80,4 +80,32 @@ git -C "$repo/r" -c core.fsmonitor=false -c filter.x.clean=cat worktree add -q -
 mkdir "$repo/wt/sub"
 check "worktree branch read through its .git file" "$(render_repo "$repo/wt/sub")" "| wt" 1
 
+# The config is data. Command substitution, arithmetic that evaluates array
+# subscripts, and names the script does not own must all be ignored.
+bad=$(mktemp)
+trap 'rm -f "$conf" "$bad"; rm -rf "$repo"' EXIT
+cat > "$bad" <<EOF
+\$(touch "$repo/conf-ran")
+SEP="\$(touch $repo/conf-ran)"
+BAR_WIDTH='a[\$(touch $repo/conf-ran)]'
+COLOR_OK="32m\$(touch $repo/conf-ran)"
+PATH=/nonexistent
+LABEL_SESSION='Five hr'
+EOF
+out=$(render_repo "$repo/r" CLAUDE_STATUSLINE_CONF="$bad")
+check "hostile config runs nothing" "$(ls "$repo")" "conf-ran" 0
+check "quoted values are literal, not expanded" "$out" '$(touch' 1
+full=$(printf '{"workspace":{"current_dir":"/"},"rate_limits":{"five_hour":{"used_percentage":5,"resets_at":%s}}}' \
+  $((now + 600)) | env CLAUDE_STATUSLINE_CONF="$bad" SHOW_GIT=0 bash "$dir/statusline.sh" \
+  | sed $'s/\033\\[[0-9;]*m//g')
+check "valid lines in a hostile config still apply" "$full" "Five hr" 1
+check "rejected BAR_WIDTH falls back to 20 cells" "$full" "█░░░░░░░░░░░░░░░░░░░" 1
+
+# Escape bytes in a folder name must not reach the terminal.
+esc_dir="$repo/x$(printf '\033')]0;pwn$(printf '\007')y"
+mkdir "$esc_dir"
+out=$(jq -n --arg d "$esc_dir" '{workspace: {current_dir: $d}}' \
+  | env CLAUDE_STATUSLINE_CONF="$conf" bash "$dir/statusline.sh")
+check "folder name escape bytes are stripped" "$out" "$(printf '\033')]0" 0
+
 [ "$fails" -eq 0 ] && echo "all passed" || { echo "$fails failed"; exit 1; }

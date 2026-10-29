@@ -75,8 +75,12 @@ Standalone installs: `git pull`, then run `./install.sh` again.
 
 ## Configuring
 
-Edit `~/.claude/statusline.conf`. It is sourced as plain bash, so it is `NAME=value`
-with no spaces around the `=`. Changes apply on the next render, no restart needed.
+Edit `~/.claude/statusline.conf`. It is `NAME=value` with no spaces around the `=`;
+quote a value with `"` or `'` if it contains spaces. The file is read as data and
+never executed: values are taken literally (no `$` expansion), numeric options must
+be whole numbers, colours must be digits and semicolons, and a line that breaks
+these rules is ignored, so that option keeps its default. Changes apply on the next
+render, no restart needed.
 Comment any line out to fall back to the built-in default, and delete the whole file
 to run on defaults entirely.
 

@@ -11,7 +11,7 @@
       "displayName": "Usage Bars",
       "source": "./plugins/usage-bars",
       "description": "A multi-line status line showing your session and weekly rate limits alongside context window usage, as three aligned bars with percentages, reset countdowns, and a burn-rate projection.",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "author": {
         "name": "Kewal",
         "url": "https://iamkewal.com"

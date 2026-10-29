@@ -103,7 +103,7 @@ fi
 # ---------------------------------------------------------------- settings ---
 if [ ! -f "$SETTINGS" ]; then
   say "Creating $SETTINGS"
-  run sh -c "printf '{}\n' > '$SETTINGS'"
+  if [ "$DRY_RUN" = 1 ]; then say "  would: write {} to $SETTINGS"; else printf '{}\n' > "$SETTINGS"; fi
 else
   run cp "$SETTINGS" "$SETTINGS.bak.$STAMP"
   say "  settings.json backed up to settings.json.bak.$STAMP"

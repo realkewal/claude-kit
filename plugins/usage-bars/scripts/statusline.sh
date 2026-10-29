@@ -19,11 +19,36 @@ input=$(cat)
 
 # ----------------------------------------------------------------- config ---
 # First readable candidate wins. Set CLAUDE_STATUSLINE_CONF to point elsewhere.
+# The file is parsed, never executed: only known option names are taken, values
+# are literal (bare, "double" or 'single' quoted, no expansion), numeric options
+# must be digits, and colours must be SGR digits and semicolons. Anything else
+# is skipped, so a bad line falls back to its default instead of running.
+_conf_re="^[[:space:]]*([A-Z_]+)=(\"([^\"]*)\"|'([^']*)'|([^[:space:]]*))"
+_num_re='^[0-9]*$'
+_sgr_re='^[0-9;]*$'
+load_conf() {
+  local line name value
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ $line =~ $_conf_re ]] || continue
+    name=${BASH_REMATCH[1]}
+    value=${BASH_REMATCH[3]}${BASH_REMATCH[4]}${BASH_REMATCH[5]}
+    case "$name" in
+      BAR_WIDTH|LABEL_WIDTH|SHOW_*|WARN_PCT|DANGER_PCT|COMPACT_PCT|GIT_CACHE_TTL| \
+      PACE_MIN_ELAPSED|WEEK_PACE_MIN_ELAPSED|SESSION_WINDOW|WEEK_WINDOW)
+        [[ $value =~ $_num_re ]] || continue ;;
+      COLOR_*)
+        [[ $value =~ $_sgr_re ]] || continue ;;
+      BAR_FILL|BAR_EMPTY|BAR_MARK|SEP|MODE_SEP|DANGER_CUE|LABEL_*)
+        value=${value//[[:cntrl:]]/} ;;
+      *) continue ;;
+    esac
+    printf -v "$name" '%s' "$value"
+  done < "$1"
+}
 _self_dir=$(dirname "${BASH_SOURCE[0]}")
 for _conf in "$CLAUDE_STATUSLINE_CONF" "$HOME/.claude/statusline.conf" "$_self_dir/statusline.conf"; do
   if [ -n "$_conf" ] && [ -f "$_conf" ]; then
-    # shellcheck disable=SC1090
-    . "$_conf"
+    load_conf "$_conf"
     break
   fi
 done
@@ -132,6 +157,9 @@ EOF
 
 [ -z "$cwd" ] && cwd=$(pwd)
 dir="${cwd/#$HOME/~}"
+# A folder or output style name can hold escape bytes; never pass them through.
+dir=${dir//[[:cntrl:]]/}
+style=${style//[[:cntrl:]]/}
 
 # ----------------------------------------------------------------- pieces ---
 level_colour() {
@@ -256,7 +284,7 @@ if [ "$SHOW_GIT" = "1" ]; then
     # Per-user cache, not /tmp, which other users on a shared box can pre-create.
     cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/claude-statusline"
     mkdir -p -m 700 "$cache_dir" 2>/dev/null
-    cache_key=$(printf '%s' "$cwd" | md5 -q 2>/dev/null || printf '%s' "$cwd" | md5sum | cut -d' ' -f1)
+    cache_key=$(printf '%s' "$cwd" | { shasum -a 256 2>/dev/null || sha256sum; } | cut -d' ' -f1)
     cache_file="$cache_dir/$cache_key"
     state=""
     if [ -f "$cache_file" ]; then
