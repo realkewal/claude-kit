@@ -40,6 +40,7 @@ done
 : "${SHOW_MODES:=1}"
 : "${SHOW_DIR:=1}"
 : "${SHOW_GIT:=1}"
+: "${SHOW_DIRTY:=0}"
 : "${SHOW_CHURN:=1}"
 : "${SHOW_COST:=1}"
 
@@ -225,31 +226,63 @@ fi
 segs+=("$head_seg")
 [ "$SHOW_DIR" = "1" ] && segs+=("$C_DIR$dir$C_RESET")
 
-# git state, cached briefly: status walks the worktree on every render otherwise
-if [ "$SHOW_GIT" = "1" ] && git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  cache_dir="${TMPDIR:-/tmp}/claude-statusline"
-  mkdir -p "$cache_dir" 2>/dev/null
-  cache_key=$(printf '%s' "$cwd" | md5 -q 2>/dev/null || printf '%s' "$cwd" | md5sum | cut -d' ' -f1)
-  cache_file="$cache_dir/$cache_key"
-  git_line=""
-  if [ -f "$cache_file" ]; then
-    age=$(( $(date +%s) - $(stat -f %m "$cache_file" 2>/dev/null || stat -c %Y "$cache_file" 2>/dev/null || echo 0) ))
-    [ "$age" -lt "$GIT_CACHE_TTL" ] && git_line=$(cat "$cache_file" 2>/dev/null)
-  fi
-  if [ -z "$git_line" ]; then
-    branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
-    [ -z "$branch" ] && branch=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
-    dirty=""
-    # index-based check first; only walk for untracked files if it comes back clean
-    if ! git -C "$cwd" diff --quiet HEAD 2>/dev/null; then
-      dirty="*"
-    elif [ -n "$(git -C "$cwd" ls-files --others --exclude-standard 2>/dev/null | head -1)" ]; then
-      dirty="*"
+# git branch, read straight from HEAD, so a default render never runs git. cwd
+# can be any repo, including one whose planted .git/config git would obey.
+if [ "$SHOW_GIT" = "1" ]; then
+  git_dir="" head="" branch="" dirty=""
+  d=$cwd
+  while :; do
+    if [ -d "$d/.git" ]; then git_dir="$d/.git"; break; fi
+    if [ -f "$d/.git" ]; then # worktree or submodule: "gitdir: <path>"
+      git_dir=$(sed -n 's/^gitdir: //p' "$d/.git" 2>/dev/null)
+      case "$git_dir" in /*) ;; *) git_dir="$d/$git_dir" ;; esac
+      break
     fi
-    git_line="$branch$dirty"
-    printf '%s' "$git_line" > "$cache_file" 2>/dev/null
+    [ -z "$d" ] && break
+    d=${d%/*}
+  done
+  [ -n "$git_dir" ] && read -r head 2>/dev/null < "$git_dir/HEAD"
+  case "$head" in
+    "ref: refs/heads/"*) branch=${head#ref: refs/heads/} ;;
+    *) branch=${head:0:7} ;;
+  esac
+  branch=${branch//[[:cntrl:]]/} # HEAD is only a file, so never echo control bytes
+
+  # Opt-in dirty marker. This does run git, so it is hardened: fsmonitor is forced
+  # off, the check uses plumbing (no external diff or textconv), and every
+  # configured filter driver is blanked, since diff-index still reads a
+  # racily-clean file through its filter. Cached briefly, as it walks the worktree.
+  if [ -n "$branch" ] && [ "$SHOW_DIRTY" = "1" ]; then
+    # Per-user cache, not /tmp, which other users on a shared box can pre-create.
+    cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/claude-statusline"
+    mkdir -p -m 700 "$cache_dir" 2>/dev/null
+    cache_key=$(printf '%s' "$cwd" | md5 -q 2>/dev/null || printf '%s' "$cwd" | md5sum | cut -d' ' -f1)
+    cache_file="$cache_dir/$cache_key"
+    state=""
+    if [ -f "$cache_file" ]; then
+      age=$(( $(date +%s) - $(stat -f %m "$cache_file" 2>/dev/null || stat -c %Y "$cache_file" 2>/dev/null || echo 0) ))
+      [ "$age" -lt "$GIT_CACHE_TTL" ] && state=$(cat "$cache_file" 2>/dev/null)
+    fi
+    if [ -z "$state" ]; then
+      git_() { git -c core.fsmonitor=false -C "$cwd" "$@"; }
+      n=0
+      while IFS= read -r -d '' key; do
+        export "GIT_CONFIG_KEY_$n=$key" "GIT_CONFIG_VALUE_$n="
+        n=$((n + 1))
+      done < <(git_ config --name-only -z --get-regexp '^filter\..*\.(clean|process|required)$' 2>/dev/null)
+      export GIT_CONFIG_COUNT=$n
+      # index-based check first; only walk for untracked files if it comes back clean
+      if ! git_ diff-index --quiet HEAD -- 2>/dev/null \
+         || [ -n "$(git_ ls-files --others --exclude-standard 2>/dev/null | head -1)" ]; then
+        state="dirty"
+      else
+        state="clean"
+      fi
+      printf '%s' "$state" > "$cache_file" 2>/dev/null
+    fi
+    [ "$state" = "dirty" ] && dirty="*"
   fi
-  [ -n "$git_line" ] && segs+=("$C_GIT$git_line$C_RESET")
+  [ -n "$branch" ] && segs+=("$C_GIT$branch$dirty$C_RESET")
 fi
 
 # Session churn and spend. These are Claude's edits this session, not git state,

@@ -53,7 +53,8 @@ Useful flags:
 | `--force-conf` | Replace an existing `statusline.conf` (default is to keep yours) |
 | `--uninstall` | Remove the `statusLine` entry from settings.json |
 
-Requires `bash`, `jq`, `git`, and `awk`. Works on bash 3.2, so stock macOS is fine.
+Requires `bash`, `jq`, and `awk`, plus `git` if you turn on `SHOW_DIRTY`. Works on
+bash 3.2, so stock macOS is fine.
 
 ## Updating
 
@@ -101,9 +102,12 @@ The config is looked up in this order, first match winning:
 
 **Header segments**
 
-`SHOW_MODES` (effort, thinking, fast, output style), `SHOW_DIR`, `SHOW_GIT`,
-`SHOW_CHURN` (lines Claude edited this session), `SHOW_COST` (session spend).
-All `1` by default.
+`SHOW_MODES` (effort, thinking, fast, output style), `SHOW_DIR`, `SHOW_GIT`
+(branch name), `SHOW_CHURN` (lines Claude edited this session), `SHOW_COST`
+(session spend). All `1` by default.
+
+`SHOW_DIRTY` (default `0`) adds a `*` after the branch when there are uncommitted
+changes. Read [Git and security](#git-and-security) before turning it on.
 
 **Notes after each bar**
 
@@ -146,8 +150,8 @@ Available: `COLOR_MODEL`, `COLOR_DIR`, `COLOR_GIT`, `COLOR_TEXT`, `COLOR_TROUGH`
 
 **Performance**
 
-`GIT_CACHE_TTL` (default `3`) is how many seconds git state is reused. Raising it is
-cheaper in large repos; the cost is that a fresh edit can show a stale dirty marker
+`GIT_CACHE_TTL` (default `3`) is how many seconds the dirty marker is reused when
+`SHOW_DIRTY` is on. Raising it is cheaper in large repos; the cost is that a fresh edit can show a stale dirty marker
 for that long.
 
 ## The auto-compact tick
@@ -165,6 +169,20 @@ default**. It appears once a threshold is actually known, from any of:
 
 Guessing a default here would have been wrong more often than right, so it stays off
 until one of those says otherwise.
+
+## Git and security
+
+By default the status line never runs `git`. The branch name is read straight from
+`.git/HEAD`, so opening a repo you do not trust cannot make it run anything.
+
+The dirty marker is different. Working out whether there are uncommitted changes
+needs `git`, and git obeys the repo's own `.git/config`. A repo that arrives with a
+planted `.git` folder (from an unzipped archive, say) can use that to run commands.
+With `SHOW_DIRTY=1` the script turns off the features known to do this
+(`core.fsmonitor` and filter drivers) and uses plumbing that ignores external diff
+tools, but that guards against known risks rather than guaranteeing safety, so it is
+off by default. One side effect: with filters blanked, a Git LFS file edited within
+the last second can briefly show as dirty.
 
 ## Accessibility
 
@@ -203,8 +221,8 @@ disappear. Write `"${C_TEXT}·"`. This fails silently and produces invalid UTF-8
 
 Beyond that: the payload is read with a single `jq` call joined on a unit separator,
 because tab is an IFS-whitespace character and consecutive tabs would collapse, losing
-empty fields. Git state is cached briefly because `git status` walks the whole
-worktree on every render.
+empty fields. The dirty marker is cached briefly because checking it walks the whole
+worktree.
 
 ## Uninstall
 

@@ -46,7 +46,6 @@ STAMP=$(date +%Y%m%d-%H%M%S)
 # ------------------------------------------------------------ dependencies ---
 missing=()
 command -v jq >/dev/null 2>&1 || missing+=("jq")
-command -v git >/dev/null 2>&1 || missing+=("git")
 command -v awk >/dev/null 2>&1 || missing+=("awk")
 if [ ${#missing[@]} -gt 0 ]; then
   say "Missing required commands: ${missing[*]}"

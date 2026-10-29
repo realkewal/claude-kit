@@ -42,4 +42,42 @@ check "projection alone has no leading separator" "$week" "16%  on pace for 33%"
 # SHOW_PACE=0 turns off both projections.
 check "SHOW_PACE=0 hides all projections" "$(render 9 16260 16 313200 SHOW_PACE=0)" "on pace" 0
 
+# A repo with a planted .git/config must not get its commands run on render.
+# The edit lands in the same second as the commit, so diff-index sees it as
+# racily clean and would read it through the filter if one were left active.
+repo=$(mktemp -d)
+trap 'rm -f "$conf"; rm -rf "$repo"' EXIT
+git init -q -b main "$repo/r" && echo a > "$repo/r/f" && echo '* filter=x' > "$repo/r/.gitattributes"
+git -C "$repo/r" add . && git -C "$repo/r" -c user.name=t -c user.email=t@t commit -qm init
+git -C "$repo/r" config core.fsmonitor "touch $repo/fsmonitor; false"
+git -C "$repo/r" config filter.x.clean "touch $repo/filter; cat"
+echo b > "$repo/r/f"
+# A git that only leaves a trace, to prove the default render never calls git.
+mkdir "$repo/bin" && printf '#!/bin/sh\ntouch "%s/ran-git"\n' "$repo" > "$repo/bin/git"
+chmod +x "$repo/bin/git"
+
+# cwd [VAR=value ...] -> header line, colours stripped
+render_repo() {
+  local cwd=$1; shift
+  printf '{"workspace":{"current_dir":"%s"}}' "$cwd" \
+    | env CLAUDE_STATUSLINE_CONF="$conf" XDG_CACHE_HOME="$repo/cache" "$@" bash "$dir/statusline.sh" \
+    | sed $'s/\033\\[[0-9;]*m//g' | head -1
+}
+
+out=$(render_repo "$repo/r" PATH="$repo/bin:$PATH")
+check "default render shows the branch" "$out" "| main" 1
+check "default render has no dirty marker" "$out" "main*" 0
+check "default render never runs git" "$(ls "$repo")" "ran-git" 0
+
+out=$(render_repo "$repo/r" SHOW_DIRTY=1)
+check "SHOW_DIRTY=1 shows the dirty marker" "$out" "main*" 1
+check "planted fsmonitor never runs" "$(ls "$repo")" "fsmonitor" 0
+check "planted filter never runs" "$(ls "$repo")" "filter" 0
+
+# Worktrees have a .git file pointing elsewhere, not a .git directory. Rendering
+# from a subfolder also covers the walk up to the repo root.
+git -C "$repo/r" -c core.fsmonitor=false -c filter.x.clean=cat worktree add -q -b wt "$repo/wt" 2>/dev/null
+mkdir "$repo/wt/sub"
+check "worktree branch read through its .git file" "$(render_repo "$repo/wt/sub")" "| wt" 1
+
 [ "$fails" -eq 0 ] && echo "all passed" || { echo "$fails failed"; exit 1; }
