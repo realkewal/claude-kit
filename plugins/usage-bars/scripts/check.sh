@@ -101,6 +101,31 @@ full=$(printf '{"workspace":{"current_dir":"/"},"rate_limits":{"five_hour":{"use
 check "valid lines in a hostile config still apply" "$full" "Five hr" 1
 check "rejected BAR_WIDTH falls back to 20 cells" "$full" "█░░░░░░░░░░░░░░░░░░░" 1
 
+# Valid edge cases: an export prefix, an empty colour, and % and * in a
+# separator. Invalid ones keep their default: a leading zero (bash would read it
+# as octal) and an unclosed quote. The model name carries escape bytes.
+odd=$(mktemp)
+trap 'rm -f "$conf" "$bad" "$odd"; rm -rf "$repo"' EXIT
+cat > "$odd" <<'EOF'
+export LABEL_SESSION=Exported
+COLOR_OK=""
+MODE_SEP=" %s* "
+BAR_WIDTH=010
+LABEL_CONTEXT="Unclosed
+EOF
+out=$(jq -n --argjson r $((now + 600)) '{model: {display_name: "M\u001b]0;pwn\u0007"},
+    effort: {level: "high"}, thinking: {enabled: true}, workspace: {current_dir: "/"},
+    context_window: {used_percentage: 5, total_input_tokens: 1, context_window_size: 2},
+    rate_limits: {five_hour: {used_percentage: 5, resets_at: $r}}}' \
+  | env CLAUDE_STATUSLINE_CONF="$odd" SHOW_GIT=0 bash "$dir/statusline.sh")
+plain=$(printf '%s' "$out" | sed $'s/\033\\[[0-9;]*m//g')
+check "export prefix is accepted" "$plain" "Exported" 1
+check "separator % and * stay literal" "$plain" "high %s* thinking" 1
+check "leading-zero number keeps the default" "$plain" "█░░░░░░░░░░░░░░░░░░░" 1
+check "unclosed quote keeps the default" "$plain" "Context" 1
+check "empty colour means no colour" "$out" "$(printf '\033')[32m█" 0
+check "model name escape bytes are stripped" "$out" "$(printf '\033')]0" 0
+
 # Escape bytes in a folder name must not reach the terminal.
 esc_dir="$repo/x$(printf '\033')]0;pwn$(printf '\007')y"
 mkdir "$esc_dir"
