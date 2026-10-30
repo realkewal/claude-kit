@@ -19,11 +19,38 @@ input=$(cat)
 
 # ----------------------------------------------------------------- config ---
 # First readable candidate wins. Set CLAUDE_STATUSLINE_CONF to point elsewhere.
+# The file is parsed, never executed: only known option names are taken, an
+# optional "export " is allowed, values are literal (bare, or a closed "double"
+# or 'single' quote, then nothing but a comment), numbers are plain decimals (no
+# leading zero, which bash would read as octal), and colours are SGR digits and
+# semicolons. Anything else is skipped, so a bad line keeps its default.
+_q="'"
+_conf_re="^[[:space:]]*(export[[:space:]]+)?([A-Z_]+)=(\"([^\"]*)\"|$_q([^$_q]*)$_q|([^[:space:]\"$_q]*))[[:space:]]*(#.*)?\$"
+_num_re='^(0|[1-9][0-9]*)$'
+_sgr_re='^[0-9;]*$'
+load_conf() {
+  local line name value
+  while IFS= read -r line || [ -n "$line" ]; do
+    [[ $line =~ $_conf_re ]] || continue
+    name=${BASH_REMATCH[2]}
+    value=${BASH_REMATCH[4]}${BASH_REMATCH[5]}${BASH_REMATCH[6]}
+    case "$name" in
+      BAR_WIDTH|LABEL_WIDTH|SHOW_*|WARN_PCT|DANGER_PCT|COMPACT_PCT|GIT_CACHE_TTL| \
+      PACE_MIN_ELAPSED|WEEK_PACE_MIN_ELAPSED|SESSION_WINDOW|WEEK_WINDOW)
+        [[ $value =~ $_num_re ]] || continue ;;
+      COLOR_*)
+        [[ $value =~ $_sgr_re ]] || continue ;;
+      BAR_FILL|BAR_EMPTY|BAR_MARK|SEP|MODE_SEP|DANGER_CUE|LABEL_*)
+        value=${value//[[:cntrl:]]/} ;;
+      *) continue ;;
+    esac
+    printf -v "$name" '%s' "$value"
+  done < "$1"
+}
 _self_dir=$(dirname "${BASH_SOURCE[0]}")
 for _conf in "$CLAUDE_STATUSLINE_CONF" "$HOME/.claude/statusline.conf" "$_self_dir/statusline.conf"; do
-  if [ -n "$_conf" ] && [ -f "$_conf" ]; then
-    # shellcheck disable=SC1090
-    . "$_conf"
+  if [ -n "$_conf" ] && [ -r "$_conf" ]; then
+    load_conf "$_conf"
     break
   fi
 done
@@ -70,16 +97,17 @@ done
 : "${LABEL_CONTEXT:=Context}"
 
 # Colours are raw SGR parameters. Basic ANSI codes (31-37) follow the terminal
-# theme; 38;5;N picks a fixed 256-colour index. Empty means no colour at all.
-: "${COLOR_MODEL:=36}"
-: "${COLOR_DIR:=32}"
-: "${COLOR_GIT:=35}"
-: "${COLOR_TEXT:=38;5;245}"
-: "${COLOR_TROUGH:=38;5;238}"
-: "${COLOR_MARK:=38;5;250}"
-: "${COLOR_OK:=32}"
-: "${COLOR_WARN:=33}"
-: "${COLOR_DANGER:=31}"
+# theme; 38;5;N picks a fixed 256-colour index. Empty means no colour at all,
+# which is why these use = rather than :=, so a set-but-empty value survives.
+: "${COLOR_MODEL=36}"
+: "${COLOR_DIR=32}"
+: "${COLOR_GIT=35}"
+: "${COLOR_TEXT=38;5;245}"
+: "${COLOR_TROUGH=38;5;238}"
+: "${COLOR_MARK=38;5;250}"
+: "${COLOR_OK=32}"
+: "${COLOR_WARN=33}"
+: "${COLOR_DANGER=31}"
 
 ESC=$'\033'
 set_colour() { # var name, SGR parameters
@@ -106,6 +134,8 @@ SPACER=$'\xe2\xa0\x80'
 # ---------------------------------------------------------------- payload ---
 # One jq invocation for the whole payload. Unit separator as the delimiter
 # because tab is an IFS-whitespace character, which would collapse empty fields.
+# Control characters are stripped from every field so none reach the terminal,
+# except cwd (field 1), which is still needed as a real path; dir is stripped below.
 US=$'\037'
 IFS="$US" read -r model cwd effort thinking fast style \
   five_pct five_reset week_pct week_reset \
@@ -127,11 +157,13 @@ $(printf '%s' "$input" | jq -r '[
   (.cost.total_cost_usd // ""),
   (.cost.total_lines_added // ""),
   (.cost.total_lines_removed // "")
-] | join("\u001f")')
+] | to_entries | map(if .key == 1 then .value
+    else .value | tostring | gsub("[[:cntrl:]]"; "") end) | join("\u001f")')
 EOF
 
 [ -z "$cwd" ] && cwd=$(pwd)
 dir="${cwd/#$HOME/~}"
+dir=${dir//[[:cntrl:]]/} # a folder name can hold escape bytes
 
 # ----------------------------------------------------------------- pieces ---
 level_colour() {
@@ -209,6 +241,14 @@ human_tokens() {
   }'
 }
 
+# separator, items... -> joined. Never a printf format or a glob, so a separator
+# holding % or * stays literal.
+join() {
+  local sep=$1 out=$2 item; shift 2
+  for item in "$@"; do out+="$sep$item"; done
+  printf '%s' "$out"
+}
+
 # ------------------------------------------------------------------ line 1 ---
 segs=()
 head_seg="$C_MODEL$model$C_RESET"
@@ -219,8 +259,7 @@ if [ "$SHOW_MODES" = "1" ]; then
   [ -n "$fast" ] && modes+=("fast")
   [ -n "$style" ] && modes+=("$style")
   if [ ${#modes[@]} -gt 0 ]; then
-    printf -v mode_str "%s$MODE_SEP" "${modes[@]}"
-    head_seg+="${C_TEXT}${MODE_SEP}${mode_str%$MODE_SEP}${C_RESET}"
+    head_seg+="${C_TEXT}${MODE_SEP}$(join "$MODE_SEP" "${modes[@]}")${C_RESET}"
   fi
 fi
 segs+=("$head_seg")
@@ -256,7 +295,7 @@ if [ "$SHOW_GIT" = "1" ]; then
     # Per-user cache, not /tmp, which other users on a shared box can pre-create.
     cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/claude-statusline"
     mkdir -p -m 700 "$cache_dir" 2>/dev/null
-    cache_key=$(printf '%s' "$cwd" | md5 -q 2>/dev/null || printf '%s' "$cwd" | md5sum | cut -d' ' -f1)
+    cache_key=$(printf '%s' "$cwd" | cksum | cut -d' ' -f1)
     cache_file="$cache_dir/$cache_key"
     state=""
     if [ -f "$cache_file" ]; then
@@ -297,8 +336,7 @@ if [ "$SHOW_COST" = "1" ] && [ -n "$cost_usd" ]; then
   [ "$cost_fmt" != '$0.00' ] && tail_bits+=("$cost_fmt")
 fi
 if [ ${#tail_bits[@]} -gt 0 ]; then
-  printf -v tail_str "%s$MODE_SEP" "${tail_bits[@]}"
-  segs+=("${C_TEXT}${tail_str%$MODE_SEP}${C_RESET}")
+  segs+=("${C_TEXT}$(join "$MODE_SEP" "${tail_bits[@]}")${C_RESET}")
 fi
 
 line1=""
